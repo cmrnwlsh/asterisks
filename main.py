@@ -3,7 +3,7 @@ import pyglet
 from pyglet import shapes, clock
 from pyglet.window import key
 
-window = pyglet.window.Window(1200, 900)
+window = pyglet.window.Window(1400, 900)
 batch = pyglet.graphics.Batch()
 w, h = window.width, window.height
 center = (w / 2, h / 2)
@@ -26,16 +26,18 @@ class Player(shapes.Polygon):
         self.vector = (0, 0)
 
     def update(self):
-        direction = tuple(sum(x) for x in zip((sin(radians(self.rotation)) / 8,
-                                               cos(radians(self.rotation)) / 8), self.vector))
         if keys[key.D]:
-            self.rotation += 3
+            self.rotation += 5
         if keys[key.A]:
-            self.rotation -= 3
+            self.rotation -= 5
         if keys[key.W]:
-            self.vector = direction
+            self.vector = tuple(sum(x) for x in
+                                zip((sin(radians(self.rotation)) / 8,
+                                     cos(radians(self.rotation)) / 8), self.vector))
         if keys[key.S]:
-            self.vector = -1 * direction
+            self.vector = tuple(sum(x) for x in
+                                zip((-1 * sin(radians(self.rotation)) / 8,
+                                     -1 * cos(radians(self.rotation)) / 8), self.vector))
         if keys[key.SPACE]:
             pass
         self.position = tuple(sum(x) for x in zip(self.vector, self.position))
@@ -66,7 +68,6 @@ def update(dt):
         ent.update()
 
 
-if __name__ == "__main__":
-    ents.append(Player())
-    clock.schedule_interval(update, 1 / 60)
-    pyglet.app.run()
+ents.append(Player())
+clock.schedule_interval(update, 1 / 60)
+pyglet.app.run()
