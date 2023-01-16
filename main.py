@@ -108,7 +108,7 @@ class Asterisk(sprite.Sprite):
             blend_dest=771,
             subpixel=False
         )
-        self.scale = 0.6
+        self.scale = 0.4
 
     def update(self):
         if self.x < -5 or self.x > w + 5 or self.y < -5 or self.y > h + 5:
