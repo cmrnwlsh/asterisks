@@ -16,7 +16,7 @@ projectiles = []
 asterisks = []
 ents = [projectiles, asterisks]
 scoopah = pyglet.image.load('scoopa3W.bmp')
-doopah = pyglet.image.load('Doopa.bmp')
+doopah = pyglet.image.load('doopa2.bmp')
 
 def add_vec(tup1, tup2):
     (x1, y1), (x2, y2) = tup1, tup2
