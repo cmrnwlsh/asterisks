@@ -1,7 +1,7 @@
 from math import cos, sin, radians, atan2, sqrt, tan
 from random import randint, choice
 import pyglet
-from pyglet import shapes, clock, text
+from pyglet import shapes, clock, text, sprite
 from pyglet.math import Vec2
 from pyglet.window import key
 
@@ -15,7 +15,7 @@ window.push_handlers(keys)
 projectiles = []
 asterisks = []
 ents = [projectiles, asterisks]
-
+img = pyglet.image.load('ScoopaW.png')
 
 def add_vec(tup1, tup2):
     (x1, y1), (x2, y2) = tup1, tup2
@@ -89,7 +89,7 @@ class Projectile(shapes.Rectangle):
             projectiles.remove(self)
 
 
-class Asterisk(shapes.Star):
+class Asterisk(sprite.Sprite):
     def __init__(self):
         side = choice(('top', 'bottom', 'left', 'right'))  # choose a random side
         coords = {'top': (randint(0, w), h),
@@ -99,9 +99,9 @@ class Asterisk(shapes.Star):
                   }[side]  # choose random coordinate along that side of the screen
 
         super(Asterisk, self).__init__(
-            *coords, 15, 4, 6,
-            rotation=randint(0, 360),
-            color=(133, 96, 76),
+            img,
+            x=coords[0],
+            y=coords[1],
             batch=batch
         )
 
@@ -110,9 +110,9 @@ class Asterisk(shapes.Star):
             print('asterisk deleted')
             asterisks.remove(self)
 
-        direction_player = Vec2(*sub_vec(player.position, self.position)).normalize()
+        direction_player = Vec2(*sub_vec(player.position, (self.x, self.y))).normalize()
         direction_mult = mul_vec(direction_player, (2.5, 2.5))
-        self.position = add_vec(direction_mult, self.position)
+        self.x, self.y = add_vec(direction_mult, (self.x, self.y))
 
 
 
@@ -132,5 +132,5 @@ def update(dt):
 player = Player()
 asterisks.append(Asterisk())
 clock.schedule_interval(update, 1 / 60)
-# clock.schedule_interval(lambda _: asterisks.append(Asterisk()), 3)
+clock.schedule_interval(lambda _: asterisks.append(Asterisk()), 3)
 pyglet.app.run()
