@@ -1,52 +1,70 @@
-from math import cos, sin, radians
+from math import cos, sin, radians, atan2, sqrt, tan
+from random import randint, choice
 import pyglet
-from pyglet import shapes, clock
+from pyglet import shapes, clock, text
+from pyglet.math import Vec2
 from pyglet.window import key
 
 window = pyglet.window.Window(1400, 900)
-z = [pyglet.graphics.Group(order=x) for x in range(10)]
-batch = pyglet.graphics.Batch()
+z = [pyglet.graphics.Group(order=x) for x in range(10)]  # z levels for layering shapes
+batch = pyglet.graphics.Batch()  # rendering batch
 w, h = window.width, window.height
 center = (w / 2, h / 2)
 keys = key.KeyStateHandler()
 window.push_handlers(keys)
-ents = []
+projectiles = []
+asterisks = []
+ents = [projectiles, asterisks]
 
 
-class Player(shapes.Polygon):
+def add_vec(tup1, tup2):
+    (x1, y1), (x2, y2) = tup1, tup2
+    return tuple((x1 + x2, y1 + y2))
+
+
+def sub_vec(tup1, tup2):
+    (x1, y1), (x2, y2) = tup1, tup2
+    return tuple((x1 - x2, y1 - y2))
+
+
+def mul_vec(tup1, tup2):
+    (x1, y1), (x2, y2) = tup1, tup2
+    return tuple((x1 * x2, y1 * y2))
+
+
+class Player(shapes.Polygon):  # resizing this triangle is a nightmare don't do it
     def __init__(self):
         super(Player, self).__init__(
-            (w / 2 - 20, h / 2),  # (x1, y1)
-            (w / 2, h / 2 + 50),  # (x2, y2)
-            (w / 2 + 20, h / 2),  # (x3, y3)
+            (w / 2 - 10, h / 2),  # (x1, y1)
+            (w / 2, h / 2 + 30),  # (x2, y2)
+            (w / 2 + 10, h / 2),  # (x3, y3)
             color=(50, 225, 30),
             batch=batch,
             group=z[9])
         self.position = center
-        self.anchor_x += 20  # x center of rotation
-        self.anchor_y += 10  # y center of rotation
+        self.anchor_x += 10  # x center of rotation
+        self.anchor_y += 15  # y center of rotation
         self.vector = (0, 0)
         self.cooldown = 15
 
     def update(self):
+        dir_x = sin(radians(self.rotation)) / 8  # don't ask me why these are reversed
+        dir_y = cos(radians(self.rotation)) / 8
+
         if keys[key.D]:
             self.rotation += 5
         if keys[key.A]:
             self.rotation -= 5
         if keys[key.W]:
-            self.vector = tuple(sum(x) for x in
-                                zip((sin(radians(self.rotation)) / 8,
-                                     cos(radians(self.rotation)) / 8), self.vector))
+            self.vector = add_vec((dir_x, dir_y), self.vector)
         if keys[key.S]:
-            self.vector = tuple(sum(x) for x in
-                                zip((-1 * sin(radians(self.rotation)) / 8,
-                                     -1 * cos(radians(self.rotation)) / 8), self.vector))
+            self.vector = add_vec((dir_x * -1, dir_y * -1), self.vector)
         if keys[key.SPACE]:
             if self.cooldown <= 0:
-                ents.append(Projectile(self.rotation, self.position))
+                projectiles.append(Projectile(self.rotation, self.position))
                 self.cooldown = 15
 
-        self.position = tuple(sum(x) for x in zip(self.vector, self.position))
+        self.position = add_vec(self.vector, self.position)
         self.rotation %= 360
         self.y %= h
         self.x %= w
@@ -56,27 +74,46 @@ class Player(shapes.Polygon):
 class Projectile(shapes.Rectangle):
     def __init__(self, r, p):
         super(Projectile, self).__init__(
-            p[0], p[1], 10, 40,
+            *p, 5, 20,  # (x,y) , width, height
             color=(225, 50, 30),
             batch=batch,
             group=z[8])
         self.rotation = r
-        self.position = p
 
     def update(self):
-        self.position = tuple(sum(x) for x in
-                              zip((sin(radians(self.rotation)) * 10,
-                                   cos(radians(self.rotation)) * 10),
-                                  self.position))
+        direction = (sin(radians(self.rotation)) * 10,
+                     cos(radians(self.rotation)) * 10)
+
+        self.position = add_vec(direction, self.position)
         if self.x < 0 or self.x > w or self.y < 0 or self.y > h:
-            ents.remove(self)
+            projectiles.remove(self)
 
 
 class Asterisk(shapes.Star):
     def __init__(self):
-        super(Asterisk, self).__init__(
+        side = choice(('top', 'bottom', 'left', 'right'))  # choose a random side
+        coords = {'top': (randint(0, w), h),
+                  'bottom': (randint(0, w), 0),
+                  'left': (0, randint(0, h)),
+                  'right': (w, randint(0, h))
+                  }[side]  # choose random coordinate along that side of the screen
 
+        super(Asterisk, self).__init__(
+            *coords, 15, 4, 6,
+            rotation=randint(0, 360),
+            color=(133, 96, 76),
+            batch=batch
         )
+
+    def update(self):
+        if self.x < -5 or self.x > w + 5 or self.y < -5 or self.y > h + 5:
+            print('asterisk deleted')
+            asterisks.remove(self)
+
+        direction_player = Vec2(*sub_vec(player.position, self.position)).normalize()
+        direction_mult = mul_vec(direction_player, (2.5, 2.5))
+        self.position = add_vec(direction_mult, self.position)
+
 
 
 @window.event
@@ -86,10 +123,14 @@ def on_draw():
 
 
 def update(dt):
-    for ent in ents:
-        ent.update()
+    player.update()
+    for ls in ents:
+        for ent in ls:
+            ent.update()
 
 
-ents.append(Player())
+player = Player()
+asterisks.append(Asterisk())
 clock.schedule_interval(update, 1 / 60)
+# clock.schedule_interval(lambda _: asterisks.append(Asterisk()), 3)
 pyglet.app.run()
