@@ -15,7 +15,8 @@ window.push_handlers(keys)
 projectiles = []
 asterisks = []
 ents = [projectiles, asterisks]
-img = pyglet.image.load('scoopa3W.bmp')
+scoopah = pyglet.image.load('scoopa3W.bmp')
+doopah = pyglet.image.load('Doopa.bmp')
 
 def add_vec(tup1, tup2):
     (x1, y1), (x2, y2) = tup1, tup2
@@ -99,7 +100,7 @@ class Asterisk(sprite.Sprite):
                   }[side]  # choose random coordinate along that side of the screen
 
         super(Asterisk, self).__init__(
-            img,
+            choice((scoopah, doopah)),
             x=coords[0],
             y=coords[1],
             batch=batch,
