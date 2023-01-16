@@ -5,7 +5,7 @@ from pyglet import shapes, clock, text, sprite
 from pyglet.math import Vec2
 from pyglet.window import key
 
-window = pyglet.window.Window(1400, 900)
+window = pyglet.window.Window(1400, 900, resizable=True)
 z = [pyglet.graphics.Group(order=x) for x in range(10)]  # z levels for layering shapes
 batch = pyglet.graphics.Batch()  # rendering batch
 w, h = window.width, window.height
@@ -120,11 +120,17 @@ class Asterisk(sprite.Sprite):
         self.x, self.y = add_vec(direction_mult, (self.x, self.y))
 
 
-
 @window.event
 def on_draw():
     window.clear()
     batch.draw()
+
+
+@window.event
+def on_resize(width, height):
+    global w, h
+    w = width
+    h = height
 
 
 def update(dt):
