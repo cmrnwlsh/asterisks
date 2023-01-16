@@ -15,7 +15,7 @@ window.push_handlers(keys)
 projectiles = []
 asterisks = []
 ents = [projectiles, asterisks]
-img = pyglet.image.load('ScoopaW.png')
+img = pyglet.image.load('scoopa3W.bmp')
 
 def add_vec(tup1, tup2):
     (x1, y1), (x2, y2) = tup1, tup2
@@ -102,8 +102,12 @@ class Asterisk(sprite.Sprite):
             img,
             x=coords[0],
             y=coords[1],
-            batch=batch
+            batch=batch,
+            blend_src=770,
+            blend_dest=771,
+            subpixel=False
         )
+        self.scale = 0.6
 
     def update(self):
         if self.x < -5 or self.x > w + 5 or self.y < -5 or self.y > h + 5:
