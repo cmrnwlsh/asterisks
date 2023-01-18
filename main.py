@@ -1,6 +1,9 @@
-from math import cos, sin, radians, atan2, sqrt, tan
-from random import randint, choice, uniform
+# pyinstaller --onefile --windowed --add-data "scoopa3W.bmp:." --add-data "doopa2.bmp.png:." your_file.py
 
+from math import cos, sin, radians
+from random import randint, choice
+import sys
+import os
 import pyglet
 from pyglet import shapes, clock, text, sprite
 from pyglet.math import Vec2
@@ -16,8 +19,16 @@ window.push_handlers(keys)
 projectiles = []
 asterisks = []
 ents = [projectiles, asterisks]
-scoopah = pyglet.image.load('scoopa3W.bmp')
-doopah = pyglet.image.load('doopa2.bmp')
+
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath('.')
+
+    return os.path.join(base_path, relative_path)
+
 
 def add_vec(tup1, tup2):
     (x1, y1), (x2, y2) = tup1, tup2
@@ -89,7 +100,7 @@ class Projectile(shapes.Rectangle):
                      cos(radians(self.rotation)) * 10)
 
         self.position = add_vec(direction, self.position)
-        if self.x < 0 or self.x > w or self.y < 0 or self.y > h\
+        if self.x < 0 or self.x > w or self.y < 0 or self.y > h \
                 and self in projectiles:
             print('projectile deleted')
             projectiles.remove(self)
@@ -124,7 +135,7 @@ class Asterisk(sprite.Sprite):
             print('asterisk deleted')
             asterisks.remove(self)
 
-        for ent in projectiles:
+        for ent in projectiles:  # collision detection (done poorly)
             if Vec2(self.x, self.y).distance(Vec2(ent.x, ent.y)) - (self.bounds + ent.bounds) <= 0 \
                     and self in asterisks:
                 score.add_score()
@@ -136,7 +147,7 @@ class Asterisk(sprite.Sprite):
 
 class Score(text.Label):
     def __init__(self):
-        self.hit_timer = 0
+        self.hit_timer = 0  # Score object keeps track of a number of frames so collisions aren't duplicated
         self.score = 0
         super(Score, self).__init__(
             str(self.score),
@@ -168,7 +179,7 @@ def on_resize(width, height):
     global w, h, score
     w = width
     h = height
-    (score.x, score.y) = (w//2, h-80)
+    (score.x, score.y) = (w // 2, h - 80)
 
 
 def update(dt):
@@ -179,6 +190,8 @@ def update(dt):
             ent.update()
 
 
+scoopah = pyglet.image.load(resource_path('scoopa3W.bmp'))  # initialize things
+doopah = pyglet.image.load(resource_path('doopa2.bmp'))
 score = Score()
 player = Player()
 asterisks.append(Asterisk())
