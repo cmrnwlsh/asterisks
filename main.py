@@ -1,5 +1,6 @@
 from math import cos, sin, radians, atan2, sqrt, tan
-from random import randint, choice
+from random import randint, choice, uniform
+
 import pyglet
 from pyglet import shapes, clock, text, sprite
 from pyglet.math import Vec2
@@ -47,6 +48,7 @@ class Player(shapes.Polygon):  # resizing this triangle is a nightmare don't do 
         self.anchor_y += 15  # y center of rotation
         self.vector = (0, 0)
         self.cooldown = 15
+        self.bounds = 20
 
     def update(self):
         dir_x = sin(radians(self.rotation)) / 8  # don't ask me why these are reversed
@@ -80,6 +82,7 @@ class Projectile(shapes.Rectangle):
             batch=batch,
             group=z[8])
         self.rotation = r
+        self.bounds = 15
 
     def update(self):
         direction = (sin(radians(self.rotation)) * 10,
@@ -108,16 +111,45 @@ class Asterisk(sprite.Sprite):
             blend_dest=771,
             subpixel=False
         )
-        self.scale = 0.4
+        self.bounds = 30
+        self.scale = uniform(0.2, 0.4)
+        direction_player = Vec2(*sub_vec(player.position, (self.x, self.y))).normalize()
+        self.vector = mul_vec(direction_player, (2.5, 2.5))
 
     def update(self):
         if self.x < -5 or self.x > w + 5 or self.y < -5 or self.y > h + 5:
             print('asterisk deleted')
             asterisks.remove(self)
 
-        direction_player = Vec2(*sub_vec(player.position, (self.x, self.y))).normalize()
-        direction_mult = mul_vec(direction_player, (2.5, 2.5))
-        self.x, self.y = add_vec(direction_mult, (self.x, self.y))
+        for ent in projectiles:
+            if Vec2(self.x, self.y).distance(Vec2(ent.x, ent.y)) - (self.bounds + ent.bounds) <= 0:
+                score.add_score()
+                asterisks.remove(self)
+
+        self.x, self.y = add_vec(self.vector, (self.x, self.y))
+
+
+class Score(text.Label):
+    def __init__(self):
+        self.hit_timer = 0
+        self.score = 0
+        super(Score, self).__init__(
+            str(self.score),
+            font_name='NotoSansArmenian-CondensedMedium',
+            font_size=48,
+            x=w // 2, y=h - 80,
+            batch=batch, group=z[9]
+        )
+
+    def update(self):
+        if self.hit_timer > 0:
+            self.hit_timer -= 1
+
+    def add_score(self):
+        if self.hit_timer == 0:
+            self.hit_timer = 60
+            self.score += 1
+            self.text = str(self.score)
 
 
 @window.event
@@ -128,20 +160,23 @@ def on_draw():
 
 @window.event
 def on_resize(width, height):
-    global w, h
+    global w, h, score
     w = width
     h = height
+    (score.x, score.y) = (w//2, h-80)
 
 
 def update(dt):
+    score.update()
     player.update()
     for ls in ents:
         for ent in ls:
             ent.update()
 
 
+score = Score()
 player = Player()
 asterisks.append(Asterisk())
 clock.schedule_interval(update, 1 / 60)
-clock.schedule_interval(lambda _: asterisks.append(Asterisk()), 3)
+clock.schedule_interval(lambda _: asterisks.append(Asterisk()), 1)
 pyglet.app.run()
