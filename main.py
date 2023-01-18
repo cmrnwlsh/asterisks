@@ -89,7 +89,9 @@ class Projectile(shapes.Rectangle):
                      cos(radians(self.rotation)) * 10)
 
         self.position = add_vec(direction, self.position)
-        if self.x < 0 or self.x > w or self.y < 0 or self.y > h:
+        if self.x < 0 or self.x > w or self.y < 0 or self.y > h\
+                and self in projectiles:
+            print('projectile deleted')
             projectiles.remove(self)
 
 
@@ -112,18 +114,21 @@ class Asterisk(sprite.Sprite):
             subpixel=False
         )
         self.bounds = 30
-        self.scale = uniform(0.2, 0.4)
+        self.scale = 0.3
         direction_player = Vec2(*sub_vec(player.position, (self.x, self.y))).normalize()
         self.vector = mul_vec(direction_player, (2.5, 2.5))
 
     def update(self):
-        if self.x < -5 or self.x > w + 5 or self.y < -5 or self.y > h + 5:
+        if self.x < -5 or self.x > w + 5 or self.y < -5 or self.y > h + 5 \
+                and self in asterisks:
             print('asterisk deleted')
             asterisks.remove(self)
 
         for ent in projectiles:
-            if Vec2(self.x, self.y).distance(Vec2(ent.x, ent.y)) - (self.bounds + ent.bounds) <= 0:
+            if Vec2(self.x, self.y).distance(Vec2(ent.x, ent.y)) - (self.bounds + ent.bounds) <= 0 \
+                    and self in asterisks:
                 score.add_score()
+                print('asterisk deleted')
                 asterisks.remove(self)
 
         self.x, self.y = add_vec(self.vector, (self.x, self.y))
@@ -147,7 +152,7 @@ class Score(text.Label):
 
     def add_score(self):
         if self.hit_timer == 0:
-            self.hit_timer = 60
+            self.hit_timer = 30
             self.score += 1
             self.text = str(self.score)
 
