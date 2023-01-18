@@ -45,18 +45,14 @@ def mul_vec(tup1, tup2):
     return tuple((x1 * x2, y1 * y2))
 
 
-class Player(shapes.Polygon):  # resizing this triangle is a nightmare don't do it
+class Player(sprite.Sprite):  # resizing this triangle is a nightmare don't do it
     def __init__(self):
         super(Player, self).__init__(
-            (w / 2 - 10, h / 2),  # (x1, y1)
-            (w / 2, h / 2 + 30),  # (x2, y2)
-            (w / 2 + 10, h / 2),  # (x3, y3)
-            color=(50, 225, 30),
+            player_img,
+            x=center[0],
+            y=center[1],
             batch=batch,
             group=z[9])
-        self.position = center
-        self.anchor_x += 10  # x center of rotation
-        self.anchor_y += 15  # y center of rotation
         self.vector = (0, 0)
         self.cooldown = 15
         self.bounds = 20
@@ -75,10 +71,10 @@ class Player(shapes.Polygon):  # resizing this triangle is a nightmare don't do 
             self.vector = add_vec((dir_x * -1, dir_y * -1), self.vector)
         if keys[key.SPACE]:
             if self.cooldown <= 0:
-                projectiles.append(Projectile(self.rotation, self.position))
+                projectiles.append(Projectile(self.rotation, (self.x, self.y)))
                 self.cooldown = 15
 
-        self.position = add_vec(self.vector, self.position)
+        (self.x, self.y) = add_vec(self.vector, (self.x, self.y))
         self.rotation %= 360
         self.y %= h
         self.x %= w
@@ -124,9 +120,9 @@ class Asterisk(sprite.Sprite):
             blend_dest=771,
             subpixel=False
         )
-        self.bounds = 30
-        self.scale = 0.3
-        direction_player = Vec2(*sub_vec(player.position, (self.x, self.y))).normalize()
+        self.bounds = 22
+        self.scale = 1
+        direction_player = Vec2(*sub_vec((player.x, player.y), (self.x, self.y))).normalize()
         self.vector = mul_vec(direction_player, (2.5, 2.5))
 
     def update(self):
@@ -190,8 +186,12 @@ def update(dt):
             ent.update()
 
 
-scoopah = pyglet.image.load(resource_path('scoopa3W.bmp'))  # initialize things
-doopah = pyglet.image.load(resource_path('doopa2.bmp'))
+scoopah = pyglet.image.load(resource_path('S.svg'))  # initialize things
+doopah = pyglet.image.load(resource_path('D.svg'))
+player_img = pyglet.image.load(resource_path('spaceship_low_white.svg'))
+(scoopah.anchor_x, scoopah._y) = (scoopah.width // 2, scoopah.height // 2)
+(doopah.anchor_x, doopah._y) = (doopah.width // 2, doopah.height // 2)
+(player_img.anchor_x, player_img.anchor_y) = (player_img.width // 2, player_img.height // 2)
 score = Score()
 player = Player()
 asterisks.append(Asterisk())
